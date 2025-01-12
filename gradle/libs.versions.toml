@@ -1,0 +1,151 @@
+[versions]
+arrow = "1.2.4"
+flogger = "0.8"
+flyway = "11.1.0"
+hikari = "6.2.1"
+jooq = "3.19.16"
+junit = "5.11.4"
+koin-bom = "4.0.1"
+koin-annotations = "2.0.0-Beta3"
+ksp = "2.1.0-1.0.28"
+kotest = "5.9.1"
+kotest-assertions-arrow = "1.4.0"
+kotlinx-serialization = "1.7.3"
+kotlinx-coroutines = "1.9.0"
+kotlin-version = "2.1.0"
+ktor-version = "3.0.3"
+logback-version = "1.4.14"
+mockk = "1.13.14"
+postgres = "42.7.4"
+suspendapp = "0.4.1-alpha.5"
+typesafe-config = "1.4.3"
+testcontainers = "1.20.4"
+uuid-creator = "6.0.0"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-version" }
+ktor = { id = "io.ktor.plugin", version.ref = "ktor-version" }
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }
+jooq = { id = "nu.studer.jooq", version = "9.0" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+
+[libraries]
+#plugins
+kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-version" }
+
+# ktor
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor-version" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor-version" }
+ktor-server-content-negociation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor-version" }
+ktor-server-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor-version" }
+
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor-version" }
+
+# logging
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback-version" }
+flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
+flogger-system-backend = { module = "com.google.flogger:flogger-system-backend", version.ref = "flogger" }
+flogger-api = { module = "com.google.flogger:flogger", version.ref = "flogger" }
+
+# kotlin
+kotlin-reflection = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin-version" }
+kotlin-serialization-plugin = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin-version" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-hocon = { module = "org.jetbrains.kotlinx:kotlinx-serialization-hocon", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx-coroutines" }
+
+#koin
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-slf4j = {module = "io.insert-koin:koin-logger-slf4j"}
+koin-ktor = { module = "io.insert-koin:koin-ktor" }
+koin-annotations-bom = { module = "io.insert-koin:koin-annotations-bom", version.ref = "koin-annotations" }
+koin-annotations-core = { module = "io.insert-koin:koin-annotations" }
+koin-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
+
+# arrow
+arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
+arrow-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
+arrow-resilience = { module = "io.arrow-kt:arrow-resilience", version.ref = "arrow" }
+arrow-atomic = { module = "io.arrow-kt:arrow-atomic", version.ref = "arrow" }
+suspendapp = { module = "io.arrow-kt:suspendapp", version.ref = "suspendapp" }
+
+#testing
+junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+kotest-assertionsCore = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest-assertions-arrow" }
+kotest-arrowfx = { module = "io.kotest.extensions:kotest-assertions-arrow-fx-coroutines", version.ref = "kotest-assertions-arrow" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+
+#runtime
+typesafe-config = { module = "com.typesafe:config", version.ref = "typesafe-config" }
+
+#db
+postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+jooq-core = { module = "org.jooq:jooq", version.ref = "jooq" }
+jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
+flyway = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
+
+#utils
+uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuid-creator" }
+
+[bundles]
+
+common-shared = [
+    "flogger-api",
+    "kotlinx-serialization-core"
+]
+
+runtime = [
+    "logback-classic",
+    "flogger-system-backend",
+    "flogger-slf4j-backend",
+    "suspendapp",
+]
+
+kotlinx-serialization = [
+    "kotlinx-serialization-json",
+    "kotlinx-serialization-hocon"
+]
+
+arrow = [
+    "arrow-core",
+    "arrow-coroutines",
+    "arrow-resilience",
+    "arrow-atomic"
+]
+
+unittest-kotlin = [
+    "kotest-assertionsCore",
+    "kotest-arrow",
+    "kotest-arrowfx",
+    "mockk",
+    "junit",
+    "kotlinx-coroutines-test",
+    "testcontainers",
+    "testcontainers-jupiter"
+]
+
+flyway = [
+    "flyway",
+    "flyway-postgres"
+]
+
+ktor = [
+    "ktor-server-core",
+    "ktor-server-netty",
+    "koin-ktor",
+    "ktor-server-content-negociation",
+    "ktor-server-json",
+    "koin-slf4j"
+]
