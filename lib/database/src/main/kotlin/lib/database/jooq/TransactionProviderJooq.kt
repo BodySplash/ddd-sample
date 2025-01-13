@@ -1,4 +1,4 @@
-package lib.database
+package lib.database.jooq
 
 import lib.common.TransactionProvider
 import org.jooq.DSLContext

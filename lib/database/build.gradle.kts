@@ -4,5 +4,12 @@ plugins {
 
 dependencies {
     implementation(project(":lib:common"))
-    implementation(libs.jooq.core)
+    implementation(project(":lib:runtime"))
+    api(libs.jooq.core)
+    api(libs.postgres)
+    api(libs.hikari)
+    implementation(libs.flyway)
+    implementation(libs.flyway.postgres)
+    implementation(libs.typesafe.config)
+    implementation(libs.kotlinx.serialization.hocon)
 }

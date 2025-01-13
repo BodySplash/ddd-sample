@@ -4,4 +4,6 @@ plugins {
 
 dependencies {
     implementation(project(":lib:common"))
+    api(libs.koin.core)
+    api(libs.typesafe.config)
 }

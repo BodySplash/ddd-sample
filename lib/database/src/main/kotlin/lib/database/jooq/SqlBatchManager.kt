@@ -1,4 +1,4 @@
-package lib.database
+package lib.database.jooq
 
 import org.jooq.DSLContext
 import org.jooq.Query

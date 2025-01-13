@@ -24,8 +24,10 @@ dependencies {
     implementation(libs.koin.annotations.core)
 
     implementation(project(":lib:common"))
+    implementation(project(":lib:runtime"))
     implementation(project(":lib:ddd"))
     implementation(project(":lib:web"))
+    implementation(project(":lib:eventsourcing"))
 
     testImplementation(libs.bundles.unittest.kotlin)
 

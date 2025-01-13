@@ -1,6 +1,6 @@
 package lib.eventsourcing
 
-import lib.database.SqlBatchManager
+import lib.database.jooq.SqlBatchManager
 import lib.ddd.domain.Event
 import lib.ddd.domain.SyncEventHandler
 

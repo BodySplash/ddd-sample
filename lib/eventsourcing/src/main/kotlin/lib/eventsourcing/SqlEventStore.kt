@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import lib.database.fetchManyAsync
-import lib.database.flow
-import lib.database.notify
+import lib.database.jooq.fetchManyAsync
+import lib.database.jooq.flow
+import lib.database.jooq.notify
 import lib.ddd.domain.EventHeader
 import lib.ddd.domain.EventId
 import lib.ddd.domain.PlainEvent

@@ -3,9 +3,9 @@ package lib.runtime
 import arrow.fx.coroutines.resource
 import com.google.common.flogger.FluentLogger
 
-class SideEffects(private val containers: Set<SideEffectContainer<*>>) {
+class SideEffects(private val containers: List<SideEffectContainer<*>>) {
 
-    suspend fun asResource() = resource {
+    fun asResource() = resource {
         LOGGER.atInfo().log("Starting side effects ${containers.map { it::class.simpleName }}")
         containers
             .map { it.create() }

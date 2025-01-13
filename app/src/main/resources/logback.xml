@@ -11,5 +11,6 @@
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
     <logger name="io.ktor" level="INFO"/>
+    <logger name="org.jooq.Constants" level="WARN"/>
     <logger name="jdk.event" level="WARN"/>
 </configuration>

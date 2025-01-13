@@ -7,8 +7,8 @@ import arrow.core.Some
 import arrow.core.raise.either
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.json.JsonElement
-import lib.database.await
-import lib.database.fetchOneAsync
+import lib.database.jooq.await
+import lib.database.jooq.fetchOneAsync
 import lib.ddd.persistence.*
 import lib.eventsourcing.schema.Tables.AGGREGATE_METADATA
 import org.jooq.DSLContext

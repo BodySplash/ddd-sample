@@ -15,7 +15,6 @@ fun Application.configureRouting() {
 
     val applicationPort by inject<ApplicationPort>()
     routing {
-
         get("/") {
             call.respondText("Hello World!")
         }

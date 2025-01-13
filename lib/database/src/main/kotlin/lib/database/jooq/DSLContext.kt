@@ -1,4 +1,4 @@
-package lib.database
+package lib.database.jooq
 
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.future.await
