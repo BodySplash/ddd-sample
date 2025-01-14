@@ -1,38 +1,69 @@
 package bodysplash.domain
 
-import arrow.core.left
+import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import arrow.core.right
+import bodysplash.domain.GameState.InProgress
 import bodysplash.support.AggregateBehaviour
 import bodysplash.support.AggregateEffect
 import bodysplash.support.ReplyConsumer
 import bodysplash.support.andReply
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import lib.common.BusinessError
 import lib.ddd.domain.BusinessResult
 import java.util.*
 
 @JvmInline
-value class GameId(val value: UUID)
+value class GameId(val value: UUID) {
+    companion object
+}
 
 sealed interface GameCommand {
     data class Create(
-        val guess: List<Color>,
-        val guesses: Short,
+        val code: List<Color>,
+        val guesses: Int,
         val replyTo: ReplyConsumer<BusinessResult<GameId>>
     ) : GameCommand
+
+    data class Guess(val colors: List<Color>, val replyTo: ReplyConsumer<BusinessResult<TurnResult>>) :
+        GameCommand
 }
+
+enum class GuessOutcome { CORRECT, ALMOST }
+
+
+@Serializable
+sealed interface TurnResult {
+
+    @Serializable
+    @SerialName("game_over")
+    data class GameOver(val winner: Winner) : TurnResult
+
+    @Serializable
+    @SerialName("try_again")
+    data class TryAgain(val hints: Map<GuessOutcome, Int>) : TurnResult
+}
+
 
 @Serializable
 sealed interface GameEvent {
     @Serializable
     data class Created(
-        val guess: List<Color>,
-        val guesses: Short,
+        val code: List<Color>,
+        val guesses: Int,
     ) : GameEvent
+
+    @Serializable
+    data object GuessedWrong : GameEvent
+
+    @Serializable
+    data class Ended(val winner: Winner) : GameEvent
 }
 
 enum class Color {
-    RED, BLUE, YELLOW, GREEN
+    WHITE, BLACK, RED, BLUE, YELLOW, GREEN
 }
 
 enum class Winner {
@@ -41,17 +72,16 @@ enum class Winner {
 
 sealed interface GameState {
     data object Initial : GameState
-    data class InProgress(val guess: List<Color>, val guesses: Short) : GameState
+    data class InProgress(val code: List<Color>, val guesses: Int) : GameState
     data object Finished : GameState
 }
 
-private inline fun <reified T : GameState> GameState.ensure(
-    consumer: ReplyConsumer<BusinessResult<Nothing>>,
-    block: (T) -> AggregateEffect<GameEvent>
-): AggregateEffect<GameEvent> = if (this is T) {
-    block(this)
-} else
-    AggregateEffect.Reply(BusinessError.withCodeAndMessage("BAD_STATE", "bad state").left(), consumer)
+
+private fun <E> Either<BusinessError, AggregateEffect<E>>.flatten(reply: ReplyConsumer<BusinessResult<Nothing>>): AggregateEffect<E> =
+    when (val e = this) {
+        is Either.Left<BusinessError> -> AggregateEffect.Reply(e, reply)
+        is Either.Right<AggregateEffect<E>> -> e.value
+    }
 
 object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent> {
 
@@ -64,22 +94,59 @@ object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent
     ): AggregateEffect<GameEvent> {
         return when (command) {
             is GameCommand.Create -> handleCreate(id, command, state)
+            is GameCommand.Guess -> handleGuess(command, state)
         }
     }
+
+    private fun handleGuess(
+        guess: GameCommand.Guess,
+        state: GameState
+    ): AggregateEffect<GameEvent> = either {
+        ensure(state is InProgress) {
+            BusinessError.withCode("BAD_STATE")
+        }
+        val result = guess.colors.mapIndexedNotNull { index, color ->
+            if (state.code[index] == color) GuessOutcome.CORRECT
+            else if (state.code.contains(color)) GuessOutcome.ALMOST
+            else null
+        }.groupBy { it }.mapValues { (_, count) -> count.size }
+        if (result.getOrDefault(GuessOutcome.CORRECT, 0) == state.code.size) {
+            return@either AggregateEffect.Persist<GameEvent>(GameEvent.Ended(Winner.PLAYER))
+                .andReply(TurnResult.GameOver(Winner.PLAYER).right(), guess.replyTo)
+        }
+        if (state.guesses == 1) return@either AggregateEffect.Persist<GameEvent>(GameEvent.Ended(Winner.MASTER))
+            .andReply(TurnResult.GameOver(Winner.MASTER).right(), guess.replyTo)
+
+        AggregateEffect.Persist<GameEvent>(GameEvent.GuessedWrong)
+            .andReply(TurnResult.TryAgain(result).right(), guess.replyTo)
+    }.flatten(guess.replyTo)
 
     private fun handleCreate(
         id: GameId,
         create: GameCommand.Create,
         state: GameState
-    ): AggregateEffect<GameEvent> = state.ensure<GameState.Initial>(create.replyTo) {
-        AggregateEffect.Persist<GameEvent>(GameEvent.Created(create.guess, create.guesses))
-            .andReply(id.right(), create.replyTo)
+    ): AggregateEffect<GameEvent> {
+        return either {
+            ensure(create.code.size == 5) {
+                BusinessError.withCode("BAD_COLORS")
+            }
+            ensure(create.guesses in 1..20) {
+                BusinessError.withCode("BAD_GUESSES")
+            }
+            ensure(state is GameState.Initial) {
+                BusinessError.withCode("BAD_STATE")
+            }
+            AggregateEffect.Persist<GameEvent>(GameEvent.Created(create.code, create.guesses))
+                .andReply(id.right(), create.replyTo)
+        }.flatten(create.replyTo)
     }
 
     override fun evolve(
         state: GameState,
         event: GameEvent
     ): GameState = when (event) {
-        is GameEvent.Created -> GameState.InProgress(event.guess, event.guesses)
+        is GameEvent.Created -> InProgress(event.code, event.guesses)
+        is GameEvent.GuessedWrong -> (state as InProgress).copy(guesses = (state.guesses - 1))
+        is GameEvent.Ended -> GameState.Finished
     }
 }

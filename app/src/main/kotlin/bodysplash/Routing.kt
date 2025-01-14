@@ -23,7 +23,7 @@ fun Application.configureRouting() {
                 val id = applicationPort.ask { r ->
                     ApplicationCommand.Game(
                         GameCommand.Create(
-                            listOf(Color.RED, Color.GREEN, Color.BLUE), 3, r
+                            listOf(Color.RED, Color.GREEN, Color.BLACK), 3, r
                         )
                     )
                 }.bind()
