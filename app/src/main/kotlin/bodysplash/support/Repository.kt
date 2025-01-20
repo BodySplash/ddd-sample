@@ -20,7 +20,7 @@ class Repository<ID, Command, State, Event>(
 ) {
 
     suspend fun get(id: ID): AggregateRef<Command> {
-        val state = store.allOf(id.toString(), behaviour.javaClass.simpleName)
+        val state = store.allOf(persistence.serializeId(id), behaviour.javaClass.simpleName)
             .map { e -> persistence.deserialize(e.payload) }
             .fold(behaviour.initialState()) { acc, event -> behaviour.evolve(acc, event) }
         return AggregateRefImpl(id, state)
@@ -29,8 +29,7 @@ class Repository<ID, Command, State, Event>(
     private inner class AggregateRefImpl(
         private var id: ID,
         private var state: State,
-    ) :
-        AggregateRef<Command> {
+    ) : AggregateRef<Command> {
 
         override suspend fun handle(command: Command) {
             transactionProvider.withTransaction {
@@ -40,7 +39,7 @@ class Repository<ID, Command, State, Event>(
 
         private suspend fun process(effect: AggregateEffect<Event>) {
             when (effect) {
-                is AggregateEffect.Both<Event> -> effect.effects.forEach { e -> process(e) }
+                is AggregateEffect.Both<Event> -> listOf(effect.persist, effect.reply).forEach { e -> process(e) }
                 is AggregateEffect.Persist<Event> -> {
                     store.save(
                         persistence.serializeId(id),

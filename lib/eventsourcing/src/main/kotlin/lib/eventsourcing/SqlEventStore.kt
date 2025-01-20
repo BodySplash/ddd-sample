@@ -22,11 +22,19 @@ import org.jooq.impl.DSL
 import org.jooq.impl.currentDsl
 import org.jooq.impl.currentDslOrDefault
 import java.time.OffsetDateTime
-import kotlin.collections.map
+
+internal val ES_TRANSACTION_ID
+    get() = DSL.field("transaction_id::text", String::class.java)
+
+data class Checkpoint(val lastTransaction: ULong, val lastPosition: Long) {
+    companion object {
+        fun toNotification(lastId: Long, lastTransaction: String) = "$lastTransaction:$lastId"
+    }
+}
 
 class SqlEventStore(
     dsl: DSLContext,
-    val schema: String,
+    schema: String,
 ) : EventStore {
 
 

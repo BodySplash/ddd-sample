@@ -1,3 +1,15 @@
 ### Create game
 POST http://localhost:8080/games
 Content-Type: application/json
+
+### Guess
+POST http://localhost:8080/games/c1e16608-487d-42c1-b748-3aad0d96432b/guesses
+Content-Type: application/json
+
+{ "colors":[
+    "BLACK",
+    "WHITE",
+    "BLACK",
+    "BLUE",
+    "YELLOW"
+  ]}

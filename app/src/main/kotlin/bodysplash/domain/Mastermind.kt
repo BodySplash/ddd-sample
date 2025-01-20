@@ -1,14 +1,11 @@
 package bodysplash.domain
 
-import arrow.core.Either
-import arrow.core.raise.either
 import arrow.core.raise.ensure
-import arrow.core.right
 import bodysplash.domain.GameState.InProgress
 import bodysplash.support.AggregateBehaviour
 import bodysplash.support.AggregateEffect
 import bodysplash.support.ReplyConsumer
-import bodysplash.support.andReply
+import bodysplash.support.buildEffect
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import lib.common.BusinessError
@@ -21,7 +18,8 @@ value class GameId(val value: UUID) {
 }
 
 sealed interface GameCommand {
-    data class Create(
+    data class
+    Create(
         val code: List<Color>,
         val guesses: Int,
         val replyTo: ReplyConsumer<BusinessResult<GameId>>
@@ -76,13 +74,6 @@ sealed interface GameState {
     data object Finished : GameState
 }
 
-
-private fun <E> Either<BusinessError, AggregateEffect<E>>.flatten(reply: ReplyConsumer<BusinessResult<Nothing>>): AggregateEffect<E> =
-    when (val e = this) {
-        is Either.Left<BusinessError> -> AggregateEffect.Reply(e, reply)
-        is Either.Right<AggregateEffect<E>> -> e.value
-    }
-
 object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent> {
 
     override fun initialState(): GameState = GameState.Initial
@@ -91,17 +82,15 @@ object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent
         id: GameId,
         command: GameCommand,
         state: GameState
-    ): AggregateEffect<GameEvent> {
-        return when (command) {
-            is GameCommand.Create -> handleCreate(id, command, state)
-            is GameCommand.Guess -> handleGuess(command, state)
-        }
+    ): AggregateEffect<GameEvent> = when (command) {
+        is GameCommand.Create -> handleCreate(id, command, state)
+        is GameCommand.Guess -> handleGuess(command, state)
     }
 
     private fun handleGuess(
         guess: GameCommand.Guess,
         state: GameState
-    ): AggregateEffect<GameEvent> = either {
+    ): AggregateEffect<GameEvent> = buildEffect(guess.replyTo) { builder ->
         ensure(state is InProgress) {
             BusinessError.withCode("BAD_STATE")
         }
@@ -110,35 +99,39 @@ object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent
             else if (state.code.contains(color)) GuessOutcome.ALMOST
             else null
         }.groupBy { it }.mapValues { (_, count) -> count.size }
-        if (result.getOrDefault(GuessOutcome.CORRECT, 0) == state.code.size) {
-            return@either AggregateEffect.Persist<GameEvent>(GameEvent.Ended(Winner.PLAYER))
-                .andReply(TurnResult.GameOver(Winner.PLAYER).right(), guess.replyTo)
-        }
-        if (state.guesses == 1) return@either AggregateEffect.Persist<GameEvent>(GameEvent.Ended(Winner.MASTER))
-            .andReply(TurnResult.GameOver(Winner.MASTER).right(), guess.replyTo)
 
-        AggregateEffect.Persist<GameEvent>(GameEvent.GuessedWrong)
-            .andReply(TurnResult.TryAgain(result).right(), guess.replyTo)
-    }.flatten(guess.replyTo)
+
+        if (playerWon(result, state)) {
+            return@buildEffect builder.persist(GameEvent.Ended(Winner.PLAYER))
+                .andReply(TurnResult.GameOver(Winner.PLAYER))
+
+        }
+        if (state.guesses == 1) return@buildEffect builder.persist(GameEvent.Ended(Winner.MASTER))
+            .andReply(TurnResult.GameOver(Winner.MASTER))
+
+        builder.persist(GameEvent.GuessedWrong).andReply(TurnResult.TryAgain(result))
+    }
+
+    private fun playerWon(
+        result: Map<GuessOutcome, Int>,
+        state: InProgress
+    ): Boolean = result.getOrDefault(GuessOutcome.CORRECT, 0) == state.code.size
 
     private fun handleCreate(
         id: GameId,
         create: GameCommand.Create,
         state: GameState
-    ): AggregateEffect<GameEvent> {
-        return either {
-            ensure(create.code.size == 5) {
-                BusinessError.withCode("BAD_COLORS")
-            }
-            ensure(create.guesses in 1..20) {
-                BusinessError.withCode("BAD_GUESSES")
-            }
-            ensure(state is GameState.Initial) {
-                BusinessError.withCode("BAD_STATE")
-            }
-            AggregateEffect.Persist<GameEvent>(GameEvent.Created(create.code, create.guesses))
-                .andReply(id.right(), create.replyTo)
-        }.flatten(create.replyTo)
+    ): AggregateEffect<GameEvent> = buildEffect(create.replyTo) { builder ->
+        ensure(create.code.size == 5) {
+            BusinessError.withCode("BAD_COLORS")
+        }
+        ensure(create.guesses in 1..20) {
+            BusinessError.withCode("BAD_GUESSES")
+        }
+        ensure(state is GameState.Initial) {
+            BusinessError.withCode("BAD_STATE")
+        }
+        builder.persist(GameEvent.Created(create.code, create.guesses)).andReply(id)
     }
 
     override fun evolve(
