@@ -1,28 +1,18 @@
 package bodysplash.application
 
-import bodysplash.domain.GameCommand
-import bodysplash.domain.GameId
 import bodysplash.domain.Repositories
-import lib.ddd.domain.ReplyConsumer
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeout
+import lib.ddd.domain.ReplyConsumer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-sealed interface ApplicationCommand {
-    data class Game(val id: GameId, val command: GameCommand) : ApplicationCommand
-}
+sealed interface ApplicationCommand
 
 class ApplicationPort(val repositories: Repositories) {
 
     suspend fun handle(command: ApplicationCommand) {
-        when (command) {
-            is ApplicationCommand.Game -> doHandle(command)
-        }
-    }
 
-    private suspend fun doHandle(message: ApplicationCommand.Game) {
-        repositories.games.get(message.id).handle(message.command)
     }
 }
 
@@ -37,7 +27,3 @@ suspend fun <Reply> ApplicationPort.ask(
     }
 }
 
-suspend fun <Reply> ApplicationPort.askGame(
-    id: GameId,
-    timeout: Duration = 10.seconds,
-    block: (ReplyConsumer<Reply>) -> GameCommand) =  ask(timeout) { r -> ApplicationCommand.Game(id, block(r)) }
