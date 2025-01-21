@@ -9,8 +9,7 @@ interface AggregateRef<TCommand> {
 }
 
 sealed interface AggregateEffect<out TEvent> {
-    data class Persist<out TEvent>(val events: List<TEvent>) : AggregateEffect<TEvent> {
-    }
+    data class Persist<out TEvent>(val events: List<TEvent>) : AggregateEffect<TEvent>
 
     data class Reply<TReply, out TEvent>(val reply: TReply, val consumer: ReplyConsumer<TReply>) :
         AggregateEffect<TEvent>
