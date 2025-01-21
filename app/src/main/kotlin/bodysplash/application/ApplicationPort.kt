@@ -3,7 +3,7 @@ package bodysplash.application
 import bodysplash.domain.GameCommand
 import bodysplash.domain.GameId
 import bodysplash.domain.Repositories
-import bodysplash.support.ReplyConsumer
+import lib.ddd.domain.ReplyConsumer
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration

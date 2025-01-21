@@ -2,14 +2,10 @@ package bodysplash.domain
 
 import arrow.core.raise.ensure
 import bodysplash.domain.GameState.InProgress
-import bodysplash.support.AggregateBehaviour
-import bodysplash.support.AggregateEffect
-import bodysplash.support.ReplyConsumer
-import bodysplash.support.buildEffect
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import lib.common.BusinessError
-import lib.ddd.domain.BusinessResult
+import lib.ddd.domain.*
 import java.util.*
 
 @JvmInline
@@ -21,7 +17,7 @@ sealed interface GameCommand {
     data class
     Create(
         val code: List<Color>,
-        val guesses: Int,
+        val maxGuesses: Int,
         val replyTo: ReplyConsumer<BusinessResult<GameId>>
     ) : GameCommand
 
@@ -30,7 +26,6 @@ sealed interface GameCommand {
 }
 
 enum class GuessOutcome { CORRECT, ALMOST }
-
 
 @Serializable
 sealed interface TurnResult {
@@ -70,7 +65,7 @@ enum class Winner {
 
 sealed interface GameState {
     data object Initial : GameState
-    data class InProgress(val code: List<Color>, val guesses: Int) : GameState
+    data class InProgress(val code: List<Color>, val remainingGuesses: Int) : GameState
     data object Finished : GameState
 }
 
@@ -100,13 +95,10 @@ object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent
             else null
         }.groupBy { it }.mapValues { (_, count) -> count.size }
 
+        if (playerWon(result, state)) return@buildEffect builder.persist(GameEvent.Ended(Winner.PLAYER))
+            .andReply(TurnResult.GameOver(Winner.PLAYER))
 
-        if (playerWon(result, state)) {
-            return@buildEffect builder.persist(GameEvent.Ended(Winner.PLAYER))
-                .andReply(TurnResult.GameOver(Winner.PLAYER))
-
-        }
-        if (state.guesses == 1) return@buildEffect builder.persist(GameEvent.Ended(Winner.MASTER))
+        if (state.remainingGuesses == 1) return@buildEffect builder.persist(GameEvent.Ended(Winner.MASTER))
             .andReply(TurnResult.GameOver(Winner.MASTER))
 
         builder.persist(GameEvent.GuessedWrong).andReply(TurnResult.TryAgain(result))
@@ -125,13 +117,13 @@ object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent
         ensure(create.code.size == 5) {
             BusinessError.withCode("BAD_COLORS")
         }
-        ensure(create.guesses in 1..20) {
+        ensure(create.maxGuesses in 1..20) {
             BusinessError.withCode("BAD_GUESSES")
         }
         ensure(state is GameState.Initial) {
             BusinessError.withCode("BAD_STATE")
         }
-        builder.persist(GameEvent.Created(create.code, create.guesses)).andReply(id)
+        builder.persist(GameEvent.Created(create.code, create.maxGuesses)).andReply(id)
     }
 
     override fun evolve(
@@ -139,7 +131,7 @@ object Mastermind : AggregateBehaviour<GameId, GameCommand, GameState, GameEvent
         event: GameEvent
     ): GameState = when (event) {
         is GameEvent.Created -> InProgress(event.code, event.guesses)
-        is GameEvent.GuessedWrong -> (state as InProgress).copy(guesses = (state.guesses - 1))
+        is GameEvent.GuessedWrong -> (state as InProgress).copy(remainingGuesses = (state.remainingGuesses - 1))
         is GameEvent.Ended -> GameState.Finished
     }
 }

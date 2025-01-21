@@ -1,12 +1,14 @@
 package bodysplash.infrastructure
 
-import bodysplash.domain.*
-import bodysplash.support.AggregatePersistence
-import bodysplash.support.Repository
+import bodysplash.domain.GameEvent
+import bodysplash.domain.Mastermind
+import bodysplash.domain.Repositories
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import lib.common.TransactionProvider
+import lib.ddd.domain.AggregateSerializer
+import lib.ddd.domain.SimpleRepository
 import lib.ddd.persistence.EventStore
 
 private val format = Json {
@@ -15,18 +17,19 @@ private val format = Json {
 
 class EventSourcedRepositories(eventStore: EventStore, transactionProvider: TransactionProvider) : Repositories {
 
-    override val games: Repository<GameId, GameCommand, GameState, GameEvent> = Repository(
+    override val games = SimpleRepository(
         Mastermind,
-        persistenceFor(GameEvent.serializer()) { id -> id.value.toString() },
+        serializerFor(GameEvent.serializer()) { id -> id.value.toString() },
         eventStore,
         transactionProvider
     )
 }
 
-private fun <T, TID> persistenceFor(
+private fun <T, TID> serializerFor(
     serializer: KSerializer<T>,
     idSerializer: (TID) -> String
-): AggregatePersistence<TID, T> = object : AggregatePersistence<TID, T> {
+): AggregateSerializer<TID, T> = object : AggregateSerializer<TID, T> {
+
     override fun serializeId(id: TID): String = idSerializer(id)
 
     override fun serialize(event: T): JsonElement = format.encodeToJsonElement(serializer, event)

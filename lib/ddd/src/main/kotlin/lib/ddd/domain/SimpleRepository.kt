@@ -1,4 +1,4 @@
-package bodysplash.support
+package lib.ddd.domain
 
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.map
@@ -6,20 +6,21 @@ import kotlinx.serialization.json.JsonElement
 import lib.common.TransactionProvider
 import lib.ddd.persistence.EventStore
 
-interface AggregatePersistence<ID, Event> {
+interface AggregateSerializer<ID, Event> {
     fun serializeId(id: ID): String
     fun serialize(event: Event): JsonElement
     fun deserialize(json: JsonElement): Event
 }
 
-class Repository<ID, Command, State, Event>(
+// Simple means: lacking some important features, like concurrency
+class SimpleRepository<ID, Command, State, Event>(
     private val behaviour: AggregateBehaviour<ID, Command, State, Event>,
-    private val persistence: AggregatePersistence<ID, Event>,
+    private val persistence: AggregateSerializer<ID, Event>,
     private val store: EventStore,
     private val transactionProvider: TransactionProvider
-) {
+): Repository<ID, Command> {
 
-    suspend fun get(id: ID): AggregateRef<Command> {
+    override suspend fun get(id: ID): AggregateRef<Command> {
         val state = store.allOf(persistence.serializeId(id), behaviour.javaClass.simpleName)
             .map { e -> persistence.deserialize(e.payload) }
             .fold(behaviour.initialState()) { acc, event -> behaviour.evolve(acc, event) }
@@ -56,4 +57,3 @@ class Repository<ID, Command, State, Event>(
         private fun <TReply> AggregateEffect.Reply<TReply, *>.exec() = consumer.accept(reply)
     }
 }
-

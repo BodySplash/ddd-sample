@@ -4,6 +4,7 @@ include(
     "app",
     "lib:common",
     "lib:ddd",
+    "lib:ddd-test",
     "lib:database",
     "lib:eventsourcing",
     "lib:runtime",

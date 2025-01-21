@@ -1,7 +1,4 @@
-package bodysplash.domain
-
-import bodysplash.support.AggregateBehaviour
-import bodysplash.support.AggregateEffect
+package lib.ddd.domain
 
 data class AggregateResult<State, Event>(val newState: State, val events: List<Event> = emptyList())
 
@@ -26,7 +23,7 @@ fun <ID, Command, State, Event> AggregateBehaviour<ID, Command, State, Event>.te
                     newState = current.events.fold(acc.newState) { acc, event -> evolve(acc, event) })
 
 
-            is AggregateEffect.Reply<*, *> -> {
+            is AggregateEffect.Reply<*, Event> -> {
                 current.sendReply()
                 acc
             }

@@ -1,16 +1,18 @@
 package bodysplash.domain
 
-import bodysplash.support.ReplyConsumer
+import com.github.f4b6a3.uuid.UuidCreator
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lib.ddd.domain.BusinessResult
+import lib.ddd.domain.ReplyConsumer
+import lib.ddd.domain.testRun
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.*
 
-fun GameId.Companion.random() = GameId(UUID.randomUUID())
+
+fun GameId.Companion.random() = GameId(UuidCreator.getTimeOrderedEpoch())
 
 class FakeReply<R> : ReplyConsumer<R> {
 
@@ -32,7 +34,7 @@ class MastermindTests {
         val result = Mastermind.testRun(
             id,
             GameCommand.Create(
-                code = colors, guesses = 5, replyTo = replyTo
+                code = colors, maxGuesses = 5, replyTo = replyTo
             )
         )
 
@@ -61,7 +63,7 @@ class MastermindTests {
             )
 
             result.events shouldContain GameEvent.GuessedWrong
-            result.newState shouldBe state.copy(guesses = 4)
+            result.newState shouldBe state.copy(remainingGuesses = 4)
             replyTo.last.shouldNotBeNull() shouldBeRight TurnResult.TryAgain(
                 mapOf(
                     GuessOutcome.ALMOST to 1,
@@ -96,7 +98,7 @@ class MastermindTests {
                         Color.GREEN, Color.YELLOW, Color.RED, Color.GREEN, Color.BLACK
                     ),
                     replyTo
-                ), state = state.copy(guesses = 1)
+                ), state = state.copy(remainingGuesses = 1)
             )
 
             result.events shouldContain GameEvent.Ended(Winner.MASTER)

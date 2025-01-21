@@ -23,12 +23,15 @@ dependencies {
     implementation(libs.koin.ksp.compiler)
     implementation(libs.koin.annotations.core)
 
+    implementation(libs.uuid.creator)
+
     implementation(project(":lib:common"))
     implementation(project(":lib:runtime"))
     implementation(project(":lib:ddd"))
     implementation(project(":lib:web"))
     implementation(project(":lib:eventsourcing"))
 
+    testImplementation(project(":lib:ddd-test"))
     testImplementation(libs.bundles.unittest.kotlin)
 
 }

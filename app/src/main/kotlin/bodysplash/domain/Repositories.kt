@@ -1,8 +1,8 @@
 package bodysplash.domain
 
-import bodysplash.support.Repository
+import lib.ddd.domain.Repository
 
 interface Repositories {
 
-    val games: Repository<GameId, GameCommand, GameState, GameEvent>
+    val games: Repository<GameId, GameCommand>
 }
