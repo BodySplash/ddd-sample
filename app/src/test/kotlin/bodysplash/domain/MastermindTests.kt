@@ -6,22 +6,13 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lib.ddd.domain.BusinessResult
-import lib.ddd.domain.ReplyConsumer
+import lib.ddd.domain.FakeReply
 import lib.ddd.domain.testRun
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 
 fun GameId.Companion.random() = GameId(UuidCreator.getTimeOrderedEpoch())
-
-class FakeReply<R> : ReplyConsumer<R> {
-
-    var last: R? = null
-
-    override fun accept(reply: R) {
-        last = reply
-    }
-}
 
 class MastermindTests {
 

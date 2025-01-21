@@ -2,6 +2,14 @@ package lib.ddd.domain
 
 data class AggregateResult<State, Event>(val newState: State, val events: List<Event> = emptyList())
 
+class FakeReply<R> : ReplyConsumer<R> {
+
+    var last: R? = null
+
+    override fun accept(reply: R) {
+        last = reply
+    }
+}
 
 fun <ID, Command, State, Event> AggregateBehaviour<ID, Command, State, Event>.testRun(
     id: ID,
